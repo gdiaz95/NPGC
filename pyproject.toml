@@ -27,6 +27,11 @@ dependencies = [
     "scipy"
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/gdiaz95/NPGC"
 Repository = "https://github.com/gdiaz95/NPGC"
@@ -38,3 +43,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/npgc"]
+
+[tool.pytest.ini_options]
+addopts = "-p no:cacheprovider"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py", "tests_*.py"]
+norecursedirs = [".git", ".venv", ".pytest_cache", "dist", "build", "pytest-cache-files-*"]

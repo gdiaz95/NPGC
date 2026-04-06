@@ -40,8 +40,35 @@ print(synthetic.head())
 
 ## Development
 
+Install development dependencies with:
+
+```bash
+uv sync --group dev
+```
+
+Run the test suite with:
+
+```bash
+.\.venv\Scripts\python -m pytest
+```
+
 Build distributions locally with:
 
 ```bash
-python -m build
+$env:UV_CACHE_DIR='.uv-cache'
+uv build
+```
+
+## Release
+
+After building, upload the artifacts in `dist/` to PyPI:
+
+```bash
+uv publish
+```
+
+Or with Twine:
+
+```bash
+python -m twine upload dist/*
 ```
