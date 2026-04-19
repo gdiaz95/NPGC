@@ -121,7 +121,41 @@ class NPGC:
             valid_data = series.dropna()
             nan_frac = series.isna().mean()
             dtype = series.dtype
-            if pd.api.types.is_numeric_dtype(dtype):
+            if pd.api.types.is_datetime64_any_dtype(dtype):
+                tz = getattr(dtype, "tz", None)
+                ref = pd.Timestamp("1970-01-01", tz="UTC") if tz is not None else pd.Timestamp("1970-01-01")
+
+                float_secs_valid = (valid_data - ref).dt.total_seconds().values
+                float_secs_full = (series - ref).dt.total_seconds().values
+                n_valid = len(float_secs_valid)
+
+                if n_valid > 0 and eps_marginal is not None and eps_marginal > 0:
+                    counts, edges = np.histogram(float_secs_valid, bins=100)
+                    if edges[0] == edges[-1]:
+                        sorted_values = np.full(n_valid, float(edges[0]))
+                    else:
+                        noise = rng.laplace(0, 1.0 / eps_marginal, size=len(counts))
+                        noisy_counts = np.maximum(counts.astype(float) + noise, 0.0)
+                        total = noisy_counts.sum()
+                        p = noisy_counts / total if total > 0 else np.ones(len(counts)) / len(counts)
+                        bin_idx = rng.choice(len(counts), size=n_valid, replace=True, p=p)
+                        dp_samples = edges[bin_idx] + rng.random(n_valid) * (edges[bin_idx + 1] - edges[bin_idx])
+                        sorted_values = np.sort(dp_samples)
+                else:
+                    sorted_values = np.sort(float_secs_valid) if n_valid > 0 else np.array([])
+
+                marginals[col] = {
+                    "type": "datetime",
+                    "sorted_values": sorted_values,
+                    "nan_frac": nan_frac,
+                    "dtype": dtype,
+                    "dtype_name": str(dtype),
+                    "tz": str(tz),
+                }
+
+                u = self._empirical_cdf_datetime_floats(float_secs_full, rng, epsilon=eps_marginal)
+
+            elif pd.api.types.is_numeric_dtype(dtype):
                 is_integer = np.allclose(valid_data % 1, 0) if len(valid_data) > 0 else False
 
                 n_valid = len(valid_data)
@@ -275,6 +309,9 @@ class NPGC:
                 synthetic_data[col] = self._inverse_ecdf_integer(u_samples, meta)
             elif meta['type'] == 'categorical':
                 synthetic_data[col] = self._inverse_ecdf_categorical(u_samples, meta)
+            elif meta['type'] == 'datetime':
+                synthetic_data[col] = self._inverse_ecdf_datetime(u_samples, meta)
+                continue  # dtype already restored inside _inverse_ecdf_datetime
 
             # Restore Dtypes
             try:
@@ -532,3 +569,51 @@ class NPGC:
             right_slope = (sorted_vals[-1] - sorted_vals[-2]) / max(knots_u[-1] - knots_u[-2], 1e-12)
             x[right] = sorted_vals[-1] + (u[right] - knots_u[-1]) * right_slope
         return x
+
+    def _empirical_cdf_datetime_floats(self, float_secs: np.ndarray, rng: np.random.Generator, epsilon: float | None = None) -> np.ndarray:
+        """CDF for datetime columns on pre-converted float-seconds array. Always uses histogram path."""
+        arr = np.asarray(float_secs, float)
+        mask = ~np.isnan(arr)
+        valid = arr[mask]
+        u = np.full(arr.shape, np.nan)
+
+        if valid.size == 0:
+            return np.clip(u, 1e-12, 1 - 1e-12)
+
+        if epsilon is not None and epsilon > 0:
+            counts, edges = np.histogram(valid, bins=100)
+            if edges[0] == edges[-1]:
+                u[mask] = rng.random(valid.size)
+            else:
+                noisy_counts = np.maximum(counts.astype(float) + rng.laplace(0, 1.0 / epsilon, size=100), 0.0)
+                total = noisy_counts.sum()
+                if total <= 0:
+                    u[mask] = rng.random(valid.size)
+                else:
+                    p = noisy_counts / total
+                    P = np.cumsum(p)
+                    L = np.insert(P[:-1], 0, 0.0)
+                    bin_idx = np.searchsorted(edges, valid, side="right") - 1
+                    bin_idx = np.clip(bin_idx, 0, len(p) - 1)
+                    u[mask] = L[bin_idx] + rng.random(valid.size) * p[bin_idx]
+        else:
+            r_min = rankdata(valid, method="min")
+            r_max = rankdata(valid, method="max")
+            v = rng.random(valid.size)
+            u[mask] = (r_min - 1 + v * (r_max - r_min + 1)) / valid.size
+
+        return np.clip(u, 1e-12, 1 - 1e-12)
+
+    def _inverse_ecdf_datetime(self, u_values: np.ndarray | pd.Series, meta: dict[str, Any]) -> pd.DatetimeIndex:
+        """Inverse ECDF for datetime: maps u → float seconds → datetime."""
+        float_secs = self._inverse_ecdf_continuous(u_values, meta)
+        tz_str = meta.get("tz", "None")
+        utc = tz_str not in (None, "None", "")
+        result = pd.to_datetime(float_secs, unit="s", utc=utc)
+        if utc:
+            result = result.tz_convert(tz_str)
+        try:
+            result = result.astype(meta["dtype"])
+        except Exception:
+            pass
+        return result
