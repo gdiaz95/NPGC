@@ -23,7 +23,7 @@ BibTeX:
 
 `npgc` is a Python package for fitting a non-parametric Gaussian copula to tabular data and generating synthetic tabular samples from the learned distribution. The implementation combines empirical marginal models with a Gaussian copula dependence structure and includes an optional differential privacy mechanism controlled by `epsilon`.
 
-This package is currently published as version `0.1.0` and should be treated as an alpha-stage research software release.
+This package is currently published as version `0.2.0` and should be treated as an alpha-stage research software release.
 
 ## Table of Contents
 
@@ -50,11 +50,12 @@ This package is currently published as version `0.1.0` and should be treated as 
 
 The implementation supports:
 
-- numeric columns
+- continuous numeric columns
 - integer-valued numeric columns
 - categorical columns
+- datetime columns (`datetime64`, tz-naive and tz-aware)
 - mixed-type `pandas.DataFrame` inputs
-- missing values through column-wise missingness estimation
+- missing values (`NaN` / `NaT`) through column-wise missingness estimation
 - model persistence with `save(...)` and `load(...)`
 - optional differential privacy noise through `epsilon`
 
@@ -182,6 +183,7 @@ from npgc import NPGC
 
 df = pd.DataFrame(
     {
+        "signup_date": pd.to_datetime(["2022-01-15", "2022-06-03", "2023-02-20", "2023-11-08"]),
         "age": [21, 34, 45, 52],
         "income": [42000.0, 68000.0, 91000.0, 120000.0],
         "segment": ["A", "B", "B", "C"],
@@ -264,9 +266,12 @@ Missingness is modeled per column through the observed missing fraction:
 
 Column handling is determined from the training `DataFrame`:
 
+- datetime64 columns (tz-naive or tz-aware) are detected first and modeled as continuous float-seconds since epoch; timezone is preserved in the output dtype
 - numeric dtypes are modeled as either integer or continuous
 - non-numeric dtypes are treated as categorical
 - output columns are cast back toward the original dtype after generation
+
+For datetime columns, DP noise is applied to the 100-bin histogram of float-seconds, which avoids the uniqueness problem of nanosecond integer encoding and keeps sensitivity well-defined (±1 per bin count) regardless of timestamp granularity.
 
 For integer-valued numeric columns, the implementation detects integer structure from the observed non-missing values and uses a dedicated inverse ECDF path.
 
@@ -297,5 +302,5 @@ For exact reproducibility, set both.
 ## Project Metadata
 
 - Package name: `npgc`
-- Current version: `0.1.0`
+- Current version: `0.2.0`
 - Issue tracker: <https://github.com/gdiaz95/NPGC/issues>
