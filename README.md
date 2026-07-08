@@ -3,21 +3,23 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-
 ## Citation
 
 The method underlying this package was first introduced in:
 
-Gabriel Diaz Ramos, Lorenzo Luzi, Debshila Basu Mallick, Richard Baraniuk. *Stable and Privacy-Preserving Synthetic Educational Data with Empirical Marginals: A Copula-Based Approach*. Accepted at EDM 2026 | [Preprint](https://arxiv.org/abs/2604.04195)
+Gabriel Diaz Ramos, Lorenzo Luzi, Debshila Basu Mallick, and Richard Baraniuk. *Stable and Privacy-Preserving Synthetic Educational Data with Empirical Marginals: A Copula-Based Approach*. Proceedings of the 19th International Conference on Educational Data Mining. International Educational Data Mining Society. [PDF](https://educationaldatamining.org/wp-content/uploads/2026/proceedings/2026.EDM.full-papers/2026.EDM.full-papers.119.pdf) | [DOI](https://doi.org/10.5281/zenodo.21040131)
 
 BibTeX:
 
 ```bibtex
-@misc{diazramos2026npgc,
+@inproceedings{diazramos2026npgc,
   title={Stable and Privacy-Preserving Synthetic Educational Data with Empirical Marginals: A Copula-Based Approach},
-  author={Gabriel Diaz Ramos and Lorenzo Luzi and Debshila Basu Mallick and Richard Baraniuk},
+  author={Diaz Ramos, Gabriel and Luzi, Lorenzo and Basu Mallick, Debshila and Baraniuk, Richard},
+  booktitle={Proceedings of the 19th International Conference on Educational Data Mining},
+  publisher={International Educational Data Mining Society},
+  pages={267--279},
   year={2026},
-  note={Accepted at EDM 2026 | Preprint}
+  doi={10.5281/zenodo.21040131}
 }
 ```
 
@@ -36,8 +38,6 @@ This package is currently published as version `0.2.0` and should be treated as 
 - [Data Contract](#data-contract)
 - [Reproducibility](#reproducibility)
 - [Project Metadata](#project-metadata)
-
-
 
 ## Overview
 
@@ -105,10 +105,10 @@ NPGC(enforce_min_max_values: bool = True, epsilon: float | None = 1.0)
 
 Initializes an unfitted synthesizer.
 
-| Parameter | Type | Default | Technical meaning |
-| --- | --- | --- | --- |
-| `enforce_min_max_values` | `bool` | `True` | Controls tail behavior during inverse ECDF reconstruction. When `True`, continuous outputs remain within the observed training range and integer outputs are snapped to the observed integer support. When `False`, continuous and integer-valued variables may extrapolate beyond the observed extrema. |
-| `epsilon` | `float \| None` | `1.0` | Default differential privacy budget used during `fit(...)` if no per-fit override is provided. If `None` or non-positive, the privacy mechanism is disabled and empirical statistics are used directly. |
+| Parameter                  | Type             | Default  | Technical meaning                                                                                                                                                                                                                                                                                           |
+| -------------------------- | ---------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enforce_min_max_values` | `bool`         | `True` | Controls tail behavior during inverse ECDF reconstruction. When`True`, continuous outputs remain within the observed training range and integer outputs are snapped to the observed integer support. When `False`, continuous and integer-valued variables may extrapolate beyond the observed extrema. |
+| `epsilon`                | `float \| None` | `1.0`  | Default differential privacy budget used during`fit(...)` if no per-fit override is provided. If `None` or non-positive, the privacy mechanism is disabled and empirical statistics are used directly.                                                                                                  |
 
 ### `fit(data, epsilon=None, random_state=None)`
 
@@ -120,11 +120,11 @@ fit(data: pandas.DataFrame, epsilon: float | None = None, random_state: int | No
 
 Fits the synthesizer to a tabular dataset.
 
-| Parameter | Type | Default | Technical meaning |
-| --- | --- | --- | --- |
-| `data` | `pandas.DataFrame` | required | Training table. The implementation requires a non-empty `DataFrame`. |
-| `epsilon` | `float \| None` | `None` | Optional fit-time override for the instance privacy budget. If supplied, it takes precedence over `self.epsilon`. |
-| `random_state` | `int \| None` | `None` | Seed used for reproducible privacy noise and randomized empirical CDF tie-breaking during fitting. |
+| Parameter        | Type                 | Default  | Technical meaning                                                                                                  |
+| ---------------- | -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| `data`         | `pandas.DataFrame` | required | Training table. The implementation requires a non-empty`DataFrame`.                                              |
+| `epsilon`      | `float \| None`     | `None` | Optional fit-time override for the instance privacy budget. If supplied, it takes precedence over`self.epsilon`. |
+| `random_state` | `int \| None`       | `None` | Seed used for reproducible privacy noise and randomized empirical CDF tie-breaking during fitting.                 |
 
 Behavior:
 
@@ -143,10 +143,10 @@ sample(num_rows: int, seed: int | None = None) -> pandas.DataFrame
 
 Generates synthetic rows from a previously fitted model.
 
-| Parameter | Type | Default | Technical meaning |
-| --- | --- | --- | --- |
-| `num_rows` | `int` | required | Number of synthetic rows to generate. |
-| `seed` | `int \| None` | `None` | Random seed for reproducible sampling from the latent Gaussian model. |
+| Parameter    | Type           | Default  | Technical meaning                                                     |
+| ------------ | -------------- | -------- | --------------------------------------------------------------------- |
+| `num_rows` | `int`        | required | Number of synthetic rows to generate.                                 |
+| `seed`     | `int \| None` | `None` | Random seed for reproducible sampling from the latent Gaussian model. |
 
 Behavior:
 
@@ -303,4 +303,4 @@ For exact reproducibility, set both.
 
 - Package name: `npgc`
 - Current version: `0.2.0`
-- Issue tracker: <https://github.com/gdiaz95/NPGC/issues>
+- Issue tracker: [https://github.com/gdiaz95/NPGC/issues](https://github.com/gdiaz95/NPGC/issues)
