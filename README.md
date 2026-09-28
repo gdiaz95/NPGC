@@ -1,7 +1,7 @@
 # NPGC
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
 
 ## Citation
 
